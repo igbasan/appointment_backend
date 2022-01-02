@@ -1,0 +1,449 @@
+swagger: "2.0"
+info:
+  title: Appointment API
+  description: This is Primed Appointment App Documentation made by me
+  version: 3.0
+  contact:
+    email: opeyemisamuel222@gmail.com
+  license:
+    name: apache 2.0
+    url: http://www.apache.org
+  servers:
+    -url: http://localhost:5000
+    description: This is the local server
+    -url: https://appointment.io
+    description: This is the company's server
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: cookie
+    security:
+      - cookieAuth: []
+
+schemes: [http, https]
+
+paths:
+
+# returns register activation token
+  /api/v2/auth/register:
+    post:
+      summary: get the user's email, language and password. send the email activation token
+      description: send the user an activation code via email.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: user
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            language:
+              type: string
+          required:
+            - email
+            - password
+            - language
+      responses:
+        200:
+          description: success
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: Register Success! Please activate your email to start
+        400:
+          description: Bad request
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: This email already exist
+
+        422:
+          description: Unprocessable Entity
+        500:
+          description: Internal server Error
+
+
+
+# user login
+  /api/v2/auth/login:
+    post:
+      summary: get the user's email and password. then login
+      description: login the user.
+      security: []  # no authentication
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: user
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          required:
+            - email
+            - password
+      responses:
+        200:
+          description: success
+          headers:
+            Set-Cookie:
+              description: "`token`"
+              schema:
+                type: string
+                example: token=51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550; Path=/; Expires=Tue, 16 Jun 2020 09:14:17 GMT; HttpOnly
+          schema:
+            type: object
+            properties:
+              _id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              language:
+                type: string
+              role:
+               type: string
+              activated:
+                type: boolean
+              job:
+                type: string
+              picture:
+               type: string
+              createdAt:
+                type: string
+              updatedAt:
+                type: string
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=abcde12345; Path=/; HttpOnly
+
+        400:
+          description: Bad request
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid Credentials
+
+        422:
+          description: Unprocessable Entity
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Account awaiting activation
+        500:
+          description: Internal server Error
+
+# returns the current user profile
+  /api/v2/auth/currentUser:
+    get:
+      summary: returns the current logged in user
+      description: get the current logged in user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: cookie
+          name: token
+          description: The `token` cookie
+          schema:
+            type: string
+            example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              _id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              language:
+                type: string
+              job:
+                type: string
+              whatBringsYouHere:
+                type: string
+              phone:
+                type: string
+              role:
+               type: string
+              picture:
+               type: string
+              createdAt:
+                type: string
+              updatedAt:
+                type: string
+        400:
+          description: Bad request
+        500:
+          description: Internal server Error
+
+# send reset password token to user's email address
+  /api/v2/auth/forgotPassword:
+    post:
+      summary: send password reset token to user's email
+      description: get the user's email and send reset password token to the email.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: email
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            language:
+              type: string
+      responses:
+        200:
+          description: success
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+        400:
+          description: Bad request
+
+        422:
+          description: Unprocessable Entity
+        500:
+          description: Internal server Error
+
+
+
+# returns a string of password reset successfully
+  /api/v2/auth/resetPassword:
+    post:
+      summary: return password successfully changed
+      description: get the user's token and new password and passwordConfirm and return a sucess message
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: password
+        schema:
+          type: object
+          properties:
+            token:
+              type: string
+            newPassword:
+              type: string
+            passwordConfirm:
+              type: string
+      responses:
+        200:
+          description: success
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+        400:
+          description: Bad request
+
+        422:
+          description: Unprocessable Entity
+        500:
+          description: Internal server Error
+
+# log the user out
+  /api/v2/auth/logout:
+    get:
+      summary: log the user out
+      description: returns a success message of logout
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+
+        400:
+          description: Bad request
+        500:
+          description: Internal server Error
+
+
+# upload user avatar
+  /api/v2/user/uploadAvatar:
+    post:
+      summary: send the avatar string(base64 string) and get the updated user
+      description: get the base64 string of the user's photo and send updated user to the client.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: avatar
+        schema:
+          type: object
+          properties:
+            avatar:
+              type: string
+          required:
+            - avatar
+      responses:
+        200:
+          description: success
+          schema:
+            type: object
+            properties:
+              _id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              language:
+                type: string
+              avatar:
+                type: string
+              job:
+                type: string
+              whatBringsYouHere:
+                type: string
+              phone:
+                type: string
+              role:
+               type: string
+              activated:
+               type: boolean
+              address:
+               type: string
+              picture:
+               type: string
+              createdAt:
+                type: string
+              updatedAt:
+                type: string
+        400:
+          description: Bad request
+
+        401:
+          description: Unauthorized
+          schema:
+            type: Object
+            properties:
+              message: No authorization token was found
+
+        422:
+          description: Unprocessable Entity
+        500:
+          description: Internal server Error
+
+# upload user avatar
+  /api/v2/user/updateProfile:
+    patch:
+      summary: send the user object and get the updated user
+      description: get the user's field you want to update, update it and send updated user to the client.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - in: body
+        name: avatar
+        schema:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            job:
+              type: string
+            address:
+              type: string
+
+      responses:
+        200:
+          description: success
+          schema:
+            type: object
+            properties:
+              _id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              language:
+                type: string
+              avatar:
+                type: string
+              job:
+                type: string
+              whatBringsYouHere:
+                type: string
+              phone:
+                type: string
+              role:
+               type: string
+              activated:
+               type: boolean
+              address:
+               type: string
+              picture:
+               type: string
+              createdAt:
+                type: string
+              updatedAt:
+                type: string
+        400:
+          description: Bad request
+
+        401:
+          description: Unauthorized
+          schema:
+            type: Object
+            properties:
+              message: No authorization token was found
+
+        422:
+          description: Unprocessable Entity
+        500:
+          description: Internal server Error
