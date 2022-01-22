@@ -134,12 +134,12 @@ export const login = asyncHandler(async (req, res, next) => {
     expiresIn: "30m",
   });
 
-  // res.cookie("token", token, {
-  //   httpOnly: false,
-  //   expires: dayjs().add(30, "minute").toDate(),
-  //   sameSite: "none",
-  //   secure: process.env.NODE_ENV === "production",
-  // });
+  res.cookie("token", token, {
+    httpOnly: false,
+    expires: dayjs().add(30, "minute").toDate(),
+    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+  });
 
   const { password: pass, ...rest } = user;
 
@@ -205,7 +205,13 @@ export const currentUser = asyncHandler(
       return next(new AppError(403, "UnAuthorized"));
     }
 
-    res.status(200).json(user);
+    // get the patient profile or hospital profile depending on the user role
+    const profile =
+      user.role === "user"
+        ? await UserProfile.findById(user.id)
+        : await HospitalProfile.findById(user.id);
+
+    res.status(200).json(profile);
   }
 );
 
@@ -279,9 +285,3 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
   res.clearCookie("token");
   res.status(200).json({ msg: "password changed successfully, login again" });
 });
-
-// export const encrypt = asyncHandler(async(req: Request, res: Response, next: NextFunction) =>{
-//  const hash =  await bcrypt.hash('Juri*143', 10)
-// console.log("$2b$10$pkoa/AXz38V9VUoSYI13pelHo5dFexvMggZ10DoK611libRYsCWW.")
-//     res.status(200).json(hash)
-// })
