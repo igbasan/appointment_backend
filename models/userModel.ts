@@ -24,31 +24,23 @@ export interface IUser extends Document {
 
 const userSchema = new Schema(
   {
-    fullName: {
-      type: String,
-      trim: true,
-    },
-
     email: {
       type: String,
       trim: true,
-     unique: true
+      unique: true,
     },
 
-
+    password: {
+      type: String,
+      trim: true,
+      required: true,
+    },
 
     phone: String,
-
-     nationality: String,
 
     role: {
       type: String,
       default: Role.USER,
-    },
-
-    avatar: {
-      type: String,
-      default: "",
     },
 
     passwordChangedAt: Date,

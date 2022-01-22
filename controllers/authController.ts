@@ -8,13 +8,8 @@ import { Email } from "../utils/email";
 
 import dayjs from "dayjs";
 import UserProfile from "../models/userModel";
+import HospitalProfile from "../models/hospitalProfileModel";
 const { promisify } = require("util");
-
-interface IRegister {
-  email: string;
-  password: string;
-  language?: string;
-}
 
 // Generate token function
 const signToken = (id: string) => {
@@ -60,15 +55,19 @@ export const register = asyncHandler(
     }
 
     // create a new user
-    const user = await User.create({ email, password });
+    const user = await User.create({
+      email,
+      password,
+      role: type === "hospital" ? "admin" : "user",
+    });
 
     // check if type is hospital
     if (type === "hospital") {
       // create a new hospital profile
-      const hospitalProfile = await User.create({
+      const hospitalProfile = await HospitalProfile.create({
         email,
-        fullName,
         hospitalName,
+        fullName,
         role: "admin",
       });
 
@@ -95,7 +94,6 @@ export const register = asyncHandler(
       // invoke the welcome email
       await new Email(user, process.env.CLIENT_URL!).sendWelcome();
 
-      await new Email(user, process.env.CLIENT_URL!).sendWelcome();
       const token = signToken(user._id!);
 
       res.cookie("token", token, {
@@ -106,10 +104,6 @@ export const register = asyncHandler(
       });
 
       res.status(200).json(userProfile);
-
-      res
-        .status(200)
-        .json({ msg: "Register Success! Please activate your email to start" });
     }
   }
 );
