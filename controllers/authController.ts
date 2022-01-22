@@ -1,17 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { google } from "googleapis";
 import asyncHandler from "express-async-handler";
 import AppError from "../utils/appError";
-import User, { IUser } from "../models/userModel";
+import User from "../models/userModel";
 import { Email } from "../utils/email";
 
 import dayjs from "dayjs";
+import UserProfile from "../models/userModel";
 const { promisify } = require("util");
-const { OAuth2 } = google.auth;
-
-const client = new OAuth2(process.env.GOOGLE_CLIENT_ID!);
 
 interface IRegister {
   email: string;
@@ -19,9 +16,6 @@ interface IRegister {
   language?: string;
 }
 
-export interface IGetUserAuthInfoRequest extends Request {
-  user: any; // or any other type
-}
 // Generate token function
 const signToken = (id: string) => {
   return jwt.sign(
@@ -48,7 +42,8 @@ const signToken = (id: string) => {
 // signup controller
 export const register = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password } = req.body;
+    const { email, password, fullName, hospitalName, passwordConfirm, type } =
+      req.body;
 
     // check if user exist
     const checkUser = await User.findOne({ email });
@@ -57,24 +52,65 @@ export const register = asyncHandler(
       return next(new AppError(400, "This email already exist"));
     }
 
+    // check if password and password confirm match
+    if (password !== passwordConfirm) {
+      return next(
+        new AppError(400, "Password and password confirm do not match")
+      );
+    }
+
     // create a new user
     const user = await User.create({ email, password });
 
-    // invoke the activation email
-    await new Email(user, process.env.CLIENT_URL!).sendWelcome();
+    // check if type is hospital
+    if (type === "hospital") {
+      // create a new hospital profile
+      const hospitalProfile = await User.create({
+        email,
+        fullName,
+        hospitalName,
+        role: "admin",
+      });
 
-    const token = signToken(user._id!);
+      // send welcome email
+      await new Email(hospitalProfile, process.env.CLIENT_URL!).sendWelcome();
+      const token = signToken(user._id!);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      expires: dayjs().add(30, "minute").toDate(),
-      sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
-    });
+      res.cookie("token", token, {
+        httpOnly: true,
+        expires: dayjs().add(30, "minute").toDate(),
+        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+      });
 
-    res
-      .status(200)
-      .json({ msg: "Register Success! Please activate your email to start" });
+      res.status(200).json(hospitalProfile);
+    } else if (type === "user") {
+      // create a new user profile
+      const userProfile = await UserProfile.create({
+        email,
+        fullName,
+        role: "user",
+      });
+
+      // invoke the welcome email
+      await new Email(user, process.env.CLIENT_URL!).sendWelcome();
+
+      await new Email(user, process.env.CLIENT_URL!).sendWelcome();
+      const token = signToken(user._id!);
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        expires: dayjs().add(30, "minute").toDate(),
+        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+      });
+
+      res.status(200).json(userProfile);
+
+      res
+        .status(200)
+        .json({ msg: "Register Success! Please activate your email to start" });
+    }
   }
 );
 
@@ -90,10 +126,6 @@ export const login = asyncHandler(async (req, res, next) => {
 
   if (!user) {
     return next(new AppError(400, "Invalid Credentials"));
-  }
-
-  if (user && !user.activated) {
-    return next(new AppError(422, "Account awaiting activation"));
   }
 
   const match = await bcrypt.compare(password, user.password!);
@@ -175,7 +207,7 @@ export const currentUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = await User.findById(res.locals.user.id);
 
-    if (!user || !user.activated) {
+    if (!user) {
       return next(new AppError(403, "UnAuthorized"));
     }
 

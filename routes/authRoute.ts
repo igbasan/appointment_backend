@@ -35,6 +35,8 @@ router.post("/login", login);
 // get the current Logged in user endpoint
 router.get("/currentUser", protect, currentUser);
 
+
+
 // forgotPassword endpoint
 router.post("/forgotPassword", forgotPassword);
 

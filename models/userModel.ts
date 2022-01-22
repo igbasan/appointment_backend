@@ -1,17 +1,18 @@
 import bcrypt from "bcrypt";
-import mongoose, { Schema, Document, AnyKeys } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 import validator from "validator";
 import crypto from "crypto";
 
 enum Role {
   USER = "user",
-  ADMIN = "admin",
+  ADMIN = "admin", // ADMIN = HOSPITAL
+  SUPER_ADMIN = "super_admin",
 }
 
 export interface IUser extends Document {
   _id?: string;
   email: string;
-  firstName?: string;
+  fullName?: string;
   lastName?: string;
   password?: string;
   role?: Role;
@@ -23,46 +24,32 @@ export interface IUser extends Document {
 
 const userSchema = new Schema(
   {
-    firstName: {
+    fullName: {
       type: String,
-      trim: true
-    },
-    lastName: {
-      type: String,
-      trim: true
+      trim: true,
     },
 
     email: {
       type: String,
       trim: true,
-      required: [true, "Please provide your email"],
-      unique: true,
-      lowercase: true,
-      validate: [validator.isEmail, "Please provide a valid email"],
+     unique: true
     },
 
-    password: {
-      type: String,
-      trim: true,
-      required: [true, "Please provide a password"],
-      minlength: 4,
-      select: false,
-    },
 
 
     phone: String,
+
+     nationality: String,
+
     role: {
       type: String,
       default: Role.USER,
     },
 
-
-
     avatar: {
       type: String,
       default: "",
     },
-
 
     passwordChangedAt: Date,
     passwordResetToken: String,
