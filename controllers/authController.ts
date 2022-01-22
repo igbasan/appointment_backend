@@ -153,6 +153,7 @@ export const logout = asyncHandler(
       httpOnly: true,
       expires: new Date(Date.now() + 10 * 1000),
     });
+    res.clearCookie("token");
 
     res.status(200).json({ msg: "Signout success" });
   }
