@@ -15,6 +15,7 @@ import cloudinaryConfig from "./utils/cloudinary";
 
 const app = express();
 import { userRouter } from "./routes/userRoute";
+import { serviceRouter } from "./routes/serviceRoute";
 // configure colors
 
 dotenv.config();
@@ -66,8 +67,10 @@ app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 const PORT = process.env.PORT || 8000;
 
 // Mount Routes
-app.use("/api/v2/auth", authRouter);
-app.use("/api/v2/user", userRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
+app.use("/api/v1/cloudinary", cloudinaryRouter);
+app.use("/api/v1/service", serviceRouter)
 
 
 //global Error Handler
